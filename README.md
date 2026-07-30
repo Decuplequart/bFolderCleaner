@@ -1,4 +1,4 @@
-# BFolderCleaner
+# BMS Folder Cleaner
 
 BMSフォルダに湧いてくる
 
