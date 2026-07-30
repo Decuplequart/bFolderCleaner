@@ -14,6 +14,13 @@ Everythingのインデックス検索を使うので爆速です。
 
 ---
 
+# ダウンロード
+
+Releasesから取得してください  
+https://github.com/Decuplequart/bFolderCleaner/releases/
+
+---
+
 # スクリーンショット
 
 ![screenshot0](images/screenshot0.png)
