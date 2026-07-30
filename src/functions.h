@@ -6,7 +6,7 @@
 #include <vector>
 
 #define APP_NAME    L"BMS Folder Cleaner"
-#define APP_VERSION L"1.0.0"
+#define APP_VERSION L"1.0.1"
 
 LRESULT CALLBACK WndProc(
     HWND hwnd,
