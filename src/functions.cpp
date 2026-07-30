@@ -28,6 +28,7 @@
 #include <windows.h>
 #include <shlobj.h>
 #include <commctrl.h>
+#include <shellapi.h>
 
 #include "../include/Everything.h"
 
@@ -252,6 +253,49 @@ LRESULT CALLBACK WndProc(
                     g_files);
             }
 
+            if (SendMessageW(
+                    g_chkDb,
+                    BM_GETCHECK,
+                    0,
+                    0) == BST_CHECKED)
+            {
+                AddSearchResults(
+                    root + L" *.db",
+                    g_files);
+            }
+
+            if (SendMessageW(
+                    g_chkDsStore,
+                    BM_GETCHECK,
+                    0,
+                    0) == BST_CHECKED)
+            {
+                AddSearchResults(
+                    root + L" .DS_Store",
+                    g_files);
+            }
+
+            if (SendMessageW(
+                    g_chkDotUnder,
+                    BM_GETCHECK,
+                    0,
+                    0) == BST_CHECKED)
+            {
+                AddSearchResults(
+                    root + L" ._*",
+                    g_files);
+            }
+
+            if (SendMessageW(
+                    g_chkMacosx,
+                    BM_GETCHECK,
+                    0,
+                    0) == BST_CHECKED)
+            {
+                AddSearchResults(
+                    root + L" __MACOSX",
+                    g_files);
+            }
             }
 
             for (const auto& file : g_files)
@@ -294,7 +338,61 @@ LRESULT CALLBACK WndProc(
             return 0;
         }
 
+        case ID_CHK_INI:
+        case ID_CHK_DB:
+        case ID_CHK_DSSTORE:
+        case ID_CHK_DOTUNDER:
+        case ID_CHK_MACOSX:
+        {
+            SendMessageW(
+                hwnd,
+                WM_COMMAND,
+                ID_RESCAN,
+                0);
+
+            return 0;
+        }
+
         case ID_ROOTLIST:
+            return 0;
+        }
+
+        break;
+    }
+
+    case WM_NOTIFY:
+    {
+        LPNMHDR hdr =
+            (LPNMHDR)lParam;
+
+        if (hdr->hwndFrom ==
+                g_listView &&
+            hdr->code ==
+                NM_DBLCLK)
+        {
+            LPNMITEMACTIVATE act =
+                (LPNMITEMACTIVATE)lParam;
+
+            int index =
+                act->iItem;
+
+            if (index >= 0 &&
+                index < (int)g_files.size())
+            {
+                std::wstring arg =
+                    L"/select,\"" +
+                    g_files[index] +
+                    L"\"";
+
+                ShellExecuteW(
+                    nullptr,
+                    L"open",
+                    L"explorer.exe",
+                    arg.c_str(),
+                    nullptr,
+                    SW_SHOW);
+            }
+
             return 0;
         }
 
@@ -340,6 +438,42 @@ void AddFileToList(
                 pos + 1);
     }
 
+    std::wstring type =
+        L"OTHER";
+
+    if (fileName == L".DS_Store")
+    {
+        type = L"DSSTORE";
+    }
+    else if (
+        fileName.rfind(
+            L"._",
+            0) == 0)
+    {
+        type = L"APPLE";
+    }
+    else if (
+        fileName == L"__MACOSX")
+    {
+        type = L"MACOSX";
+    }
+    else if (
+        fileName.size() >= 4 &&
+        fileName.substr(
+            fileName.size() - 4)
+            == L".ini")
+    {
+        type = L"INI";
+    }
+    else if (
+        fileName.size() >= 3 &&
+        fileName.substr(
+            fileName.size() - 3)
+            == L".db")
+    {
+        type = L"DB";
+    }
+
     LVITEMW item = {};
 
     item.mask = LVIF_TEXT;
@@ -349,7 +483,7 @@ void AddFileToList(
 
     item.pszText =
         const_cast<LPWSTR>(
-            fileName.c_str());
+            type.c_str());
 
     int row =
         ListView_InsertItem(
@@ -360,6 +494,13 @@ void AddFileToList(
         g_listView,
         row,
         1,
+        const_cast<LPWSTR>(
+            fileName.c_str()));
+
+    ListView_SetItemText(
+        g_listView,
+        row,
+        2,
         const_cast<LPWSTR>(
             fullPath.c_str()));
 
@@ -372,7 +513,10 @@ void AddFileToList(
 void UpdateWindowTitle()
 {
     std::wstring title =
-        L"ini/DB Killer (" +
+        std::wstring(APP_NAME) +
+        L" v" +
+        APP_VERSION +
+        L" (" +
         std::to_wstring(
             g_files.size()) +
         L"件)";
@@ -452,7 +596,7 @@ void ShowTestWindow(
         CreateWindowExW(
             0,
             CLASS_NAME,
-            L"ini/DB Killer",
+            L"BMS Folder Cleaner",
             WS_OVERLAPPEDWINDOW,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
@@ -584,21 +728,104 @@ void ShowTestWindow(
             GetModuleHandleW(nullptr),
             nullptr);
 
-    g_chkIni =
+    g_chkDb =
         CreateWindowW(
             L"BUTTON",
-            L"ini",
+            L"db",
             WS_CHILD |
             WS_VISIBLE |
             BS_AUTOCHECKBOX,
-            500,
+            570,
             112,
             60,
             25,
             hwnd,
-            (HMENU)ID_CHK_INI,
+            (HMENU)ID_CHK_DB,
             GetModuleHandleW(nullptr),
             nullptr);
+
+    g_chkDsStore =
+        CreateWindowW(
+            L"BUTTON",
+            L".DS_Store",
+            WS_CHILD |
+            WS_VISIBLE |
+            BS_AUTOCHECKBOX,
+            640,
+            112,
+            100,
+            25,
+            hwnd,
+            (HMENU)ID_CHK_DSSTORE,
+            GetModuleHandleW(nullptr),
+            nullptr);
+
+    g_chkDotUnder =
+        CreateWindowW(
+            L"BUTTON",
+            L"._*",
+            WS_CHILD |
+            WS_VISIBLE |
+            BS_AUTOCHECKBOX,
+            750,
+            112,
+            50,
+            25,
+            hwnd,
+            (HMENU)ID_CHK_DOTUNDER,
+            GetModuleHandleW(nullptr),
+            nullptr);
+        SendMessageW(
+            g_selectAll,
+            BM_SETCHECK,
+            BST_CHECKED,
+            0);
+
+    g_chkMacosx =
+        CreateWindowW(
+            L"BUTTON",
+            L"__MACOSX",
+            WS_CHILD |
+            WS_VISIBLE |
+            BS_AUTOCHECKBOX,
+            810,
+            112,
+            120,
+            25,
+            hwnd,
+            (HMENU)ID_CHK_MACOSX,
+            GetModuleHandleW(nullptr),
+            nullptr);
+
+    SendMessageW(
+        g_chkIni,
+        BM_SETCHECK,
+        BST_CHECKED,
+        0);
+
+    SendMessageW(
+        g_chkDb,
+        BM_SETCHECK,
+        BST_CHECKED,
+        0);
+
+    SendMessageW(
+        g_chkDsStore,
+        BM_SETCHECK,
+        BST_CHECKED,
+        0);
+
+    SendMessageW(
+        g_chkDotUnder,
+        BM_SETCHECK,
+        BST_CHECKED,
+        0);
+
+    SendMessageW(
+        g_chkMacosx,
+        BM_SETCHECK,
+        BST_CHECKED,
+        0);
 
     g_listView =
         CreateWindowExW(
@@ -627,29 +854,32 @@ void ShowTestWindow(
 
     col.mask = LVCF_TEXT | LVCF_WIDTH;
 
-    col.cx = 200;
-    col.pszText = const_cast<LPWSTR>(L"ファイル名");
+    col.cx = 100;
+    col.pszText =
+        const_cast<LPWSTR>(L"種類");
 
     ListView_InsertColumn(
         g_listView,
         0,
         &col);
 
-    col.cx = 900;
-    col.pszText = const_cast<LPWSTR>(L"フルパス");
+    col.cx = 200;
+    col.pszText =
+        const_cast<LPWSTR>(L"ファイル名");
 
     ListView_InsertColumn(
         g_listView,
         1,
         &col);
 
-    for (const auto& file : files)
-    {
-        AddFileToList(file);
-    }
+    col.cx = 800;
+    col.pszText =
+        const_cast<LPWSTR>(L"フルパス");
 
-    UpdateWindowTitle();
-    UpdateSelectedCount();
+    ListView_InsertColumn(
+        g_listView,
+        2,
+        &col);
 
     CreateWindowW(
         L"BUTTON",
@@ -684,7 +914,12 @@ void ShowTestWindow(
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
 
-    MSG msg;
+    SendMessageW(
+        hwnd,
+        WM_COMMAND,
+        ID_RESCAN,
+        0);
+        MSG msg;
 
     while (GetMessageW(
         &msg,
