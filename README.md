@@ -16,7 +16,7 @@ Everythingのインデックス検索を使うので爆速です。
 
 # スクリーンショット
 
-(画像を置く)
+images/screenshot0.png
 
 ---
 
