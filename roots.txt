@@ -1,4 +1,0 @@
-D:\bms\bms_chart
-D:\bms\BMS開発環境
-D:\bms\auto
-C:\Users\hiyok\Downloads\Application\bms\bmsplayer\orajava\ipfs
