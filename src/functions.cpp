@@ -134,6 +134,10 @@ LRESULT CALLBACK WndProc(
             {
                 try
                 {
+                    SetFileAttributesW(
+                        file.c_str(),
+                        FILE_ATTRIBUTE_NORMAL);
+
                     if (std::filesystem::remove_all(
                             file) > 0)
                     {
