@@ -16,7 +16,7 @@ Everythingのインデックス検索を使うので爆速です。
 
 # スクリーンショット
 
-images/screenshot0.png
+![screenshot0](images/screenshot0.png)
 
 ---
 
